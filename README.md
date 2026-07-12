@@ -6,16 +6,41 @@ Each family deploys and owns its own instance. This repository does not connect 
 
 ## Screenshots
 
+### Dark mode
+
 <table>
   <tr>
-    <td><img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today overview" width="260"></td>
-    <td><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag task list" width="260"></td>
-    <td><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag food planning and vote" width="260"></td>
+    <td><img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today in dark mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag Tasks in dark mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-events-dark.png" alt="Vardag Events in dark mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-shopping-dark.png" alt="Vardag Shopping in dark mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag Food in dark mode" width="150"></td>
   </tr>
   <tr>
     <td align="center">Today</td>
     <td align="center">Tasks</td>
-    <td align="center">Food and votes</td>
+    <td align="center">Events</td>
+    <td align="center">Shopping</td>
+    <td align="center">Food</td>
+  </tr>
+</table>
+
+### Light mode
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today in light mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-tasks-light.png" alt="Vardag Tasks in light mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-events-light.png" alt="Vardag Events in light mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-shopping-light.png" alt="Vardag Shopping in light mode" width="150"></td>
+    <td><img src="docs/screenshots/vardag-food-light.png" alt="Vardag Food in light mode" width="150"></td>
+  </tr>
+  <tr>
+    <td align="center">Today</td>
+    <td align="center">Tasks</td>
+    <td align="center">Events</td>
+    <td align="center">Shopping</td>
+    <td align="center">Food</td>
   </tr>
 </table>
 
