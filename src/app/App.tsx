@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { PageId } from './routes';
+import { routes, type PageId } from './routes';
 import { AuthProvider } from './AuthContext';
 import { I18nProvider, useI18n } from './I18nContext';
 import { VardagDataProvider, useVardagData } from './VardagDataContext';
@@ -26,7 +26,12 @@ function ActivePage({ page }: { page: PageId }) {
 function AppContent() {
   const { isLoading } = useVardagData();
   const { t } = useI18n();
-  const [page, setPage] = useState<PageId>('today');
+  const readPageFromUrl = (): PageId => {
+    const requested = new URLSearchParams(window.location.search).get('page');
+    return routes.some((route) => route.id === requested) ? requested as PageId : 'today';
+  };
+  const pageUrl = (nextPage: PageId): string => nextPage === 'today' ? window.location.pathname : `${window.location.pathname}?page=${nextPage}`;
+  const [page, setPage] = useState<PageId>(readPageFromUrl);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const savedTheme = localStorage.getItem('vardag-theme');
@@ -34,10 +39,10 @@ function AppContent() {
   });
 
   useEffect(() => {
-    window.history.replaceState({ ...window.history.state, vardagPage: 'today' }, '');
+    window.history.replaceState({ ...window.history.state, vardagPage: page }, '', pageUrl(page));
     const handlePopState = (event: PopStateEvent) => {
       const nextPage = event.state?.vardagPage as PageId | undefined;
-      if (nextPage) setPage(nextPage);
+      setPage(nextPage && routes.some((route) => route.id === nextPage) ? nextPage : readPageFromUrl());
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -46,7 +51,7 @@ function AppContent() {
   const navigate = useCallback((nextPage: PageId) => {
     setPage((currentPage) => {
       if (currentPage === nextPage) return currentPage;
-      window.history.pushState({ ...window.history.state, vardagPage: nextPage }, '');
+      window.history.pushState({ ...window.history.state, vardagPage: nextPage }, '', pageUrl(nextPage));
       return nextPage;
     });
   }, []);

@@ -22,3 +22,8 @@ jobs:
       - run: npm run test:parser
       - run: npm run test:i18n
       - run: npm run test:scope
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase test db

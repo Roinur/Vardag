@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 
 export type CloudEntityType = 'entries' | 'tasks' | 'events' | 'shopping_items' | 'food_logs' | 'food_decisions';
 
-const collectionMap: Record<CloudEntityType, keyof AppStateSnapshot> = {
+export const collectionMap: Record<CloudEntityType, keyof AppStateSnapshot> = {
   entries: 'entries',
   tasks: 'tasks',
   events: 'events',
@@ -12,92 +12,82 @@ const collectionMap: Record<CloudEntityType, keyof AppStateSnapshot> = {
   food_decisions: 'foodDecisions'
 };
 
-export const pushCloudRecord = async (
-  householdId: string | undefined,
-  userId: string | undefined,
-  entityType: CloudEntityType,
-  record: { id: string; ownerId?: string; scope?: string }
-): Promise<void> => {
-  if (!supabase || !householdId || !userId) return;
-  const { error } = await supabase.from('vardag_records').upsert({
-    household_id: householdId,
-    owner_id: record.ownerId ?? userId,
-    entity_type: entityType,
-    record_id: record.id,
-    payload: record,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'household_id,entity_type,record_id' });
-  if (error) throw error;
-};
+export interface CloudMutation {
+  entityType: CloudEntityType;
+  recordId: string;
+  operation: 'upsert' | 'delete' | 'completion' | 'vote' | 'add_vote_option' | 'decide_vote';
+  payload?: Record<string, unknown>;
+  ownerId?: string;
+  clientUpdatedAt: string;
+  completed?: boolean;
+  optionId?: string;
+  title?: string;
+  suggestedBy?: string;
+}
 
-export const deleteCloudRecord = async (
-  householdId: string | undefined,
-  entityType: CloudEntityType,
-  recordId: string
-): Promise<void> => {
-  if (!supabase || !householdId) return;
-  const { error } = await supabase
-    .from('vardag_records')
-    .delete()
-    .eq('household_id', householdId)
-    .eq('entity_type', entityType)
-    .eq('record_id', recordId);
-  if (error) throw error;
-};
+export interface CloudState {
+  snapshot: AppStateSnapshot;
+  recordIds: Set<string>;
+}
 
-export const pushCloudSnapshot = async (
-  householdId: string,
-  userId: string,
-  snapshot: AppStateSnapshot
-): Promise<void> => {
+export const applyCloudMutation = async (householdId: string, mutation: CloudMutation): Promise<void> => {
   if (!supabase) return;
-  const rows = (Object.entries(collectionMap) as Array<[CloudEntityType, keyof AppStateSnapshot]>).flatMap(
-    ([entityType, collection]) => snapshot[collection].map((record) => ({
-      household_id: householdId,
-      owner_id: record.ownerId ?? userId,
-      entity_type: entityType,
-      record_id: record.id,
-      payload: record,
-      updated_at: new Date().toISOString()
-    }))
-  );
-  if (rows.length === 0) return;
-  const { error } = await supabase.from('vardag_records').upsert(rows, {
-    onConflict: 'household_id,entity_type,record_id'
+  if (mutation.operation === 'completion') {
+    const { error } = await supabase.rpc('apply_vardag_completion', {
+      p_household_id: householdId,
+      p_entity_type: mutation.entityType,
+      p_record_id: mutation.recordId,
+      p_completed: Boolean(mutation.completed),
+      p_client_updated_at: mutation.clientUpdatedAt
+    });
+    if (error) throw error;
+    return;
+  }
+  if (mutation.operation === 'vote' || mutation.operation === 'add_vote_option' || mutation.operation === 'decide_vote') {
+    const fn = mutation.operation === 'vote' ? 'vote_food_option' : mutation.operation === 'add_vote_option' ? 'add_food_vote_option' : 'decide_food_poll';
+    const args = mutation.operation === 'vote'
+      ? { p_decision_id: mutation.recordId, p_option_id: mutation.optionId }
+      : mutation.operation === 'add_vote_option'
+        ? { p_decision_id: mutation.recordId, p_title: mutation.title, p_suggested_by: mutation.suggestedBy }
+        : { p_decision_id: mutation.recordId, p_option_id: mutation.optionId };
+    const { error } = await supabase.rpc(fn, args);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase.rpc('apply_vardag_mutation', {
+    p_household_id: householdId,
+    p_entity_type: mutation.entityType,
+    p_record_id: mutation.recordId,
+    p_owner_id: mutation.ownerId ?? null,
+    p_payload: mutation.payload ?? null,
+    p_client_updated_at: mutation.clientUpdatedAt,
+    p_deleted: mutation.operation === 'delete'
   });
   if (error) throw error;
 };
 
-export const clearCloudSnapshot = async (householdId: string): Promise<void> => {
-  if (!supabase) return;
-  const { error } = await supabase.from('vardag_records').delete().eq('household_id', householdId);
-  if (error) throw error;
-};
-
-export const pullCloudSnapshot = async (householdId: string): Promise<AppStateSnapshot | null> => {
-  if (!supabase) return null;
+export const pullCloudState = async (householdId: string): Promise<CloudState> => {
+  const snapshot: AppStateSnapshot = { entries: [], tasks: [], events: [], shoppingItems: [], foodLogs: [], foodDecisions: [] };
+  const recordIds = new Set<string>();
+  if (!supabase) return { snapshot, recordIds };
   const { data, error } = await supabase
     .from('vardag_records')
-    .select('entity_type,payload,owner_id')
+    .select('entity_type,record_id,payload,owner_id,deleted_at,client_updated_at')
     .eq('household_id', householdId);
   if (error) throw error;
-  if (!data?.length) return null;
 
-  const snapshot: AppStateSnapshot = {
-    entries: [],
-    tasks: [],
-    events: [],
-    shoppingItems: [],
-    foodLogs: [],
-    foodDecisions: []
-  };
-
-  for (const row of data) {
-    const collection = collectionMap[row.entity_type as CloudEntityType];
-    const record = row.payload as { id?: string; ownerId?: string } | null;
-    if (!collection || !record?.id) continue;
+  for (const row of data ?? []) {
+    const entityType = row.entity_type as CloudEntityType;
+    const collection = collectionMap[entityType];
+    const key = `${entityType}:${row.record_id}`;
+    if (!collection) continue;
+    recordIds.add(key);
+    if (row.deleted_at) continue;
+    const record = row.payload as Record<string, unknown> | null;
+    if (!record?.id) continue;
     record.ownerId = row.owner_id;
+    record.updatedAt = row.client_updated_at;
     (snapshot[collection] as Array<unknown>).push(record);
   }
-  return snapshot;
+  return { snapshot, recordIds };
 };

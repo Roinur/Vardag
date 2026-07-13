@@ -12,8 +12,7 @@ Deno.serve(async (request) => {
     const authorization = request.headers.get('Authorization') ?? '';
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { global: { headers: { Authorization: authorization } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
     const token = authorization.replace(/^Bearer\s+/i, '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);

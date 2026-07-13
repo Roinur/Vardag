@@ -11,6 +11,7 @@ interface ScopedRecord {
   assigneeName?: string;
   assigneeIds?: string[];
   assigneeNames?: string[];
+  updatedAt?: string;
 }
 
 export interface Entry extends ScopedRecord {
