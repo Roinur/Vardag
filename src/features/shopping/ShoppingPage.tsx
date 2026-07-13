@@ -56,7 +56,7 @@ export function ShoppingPage() {
 
   const categoryIcon = (categoryName: string) => {
     if (categoryName === 'Groceries') return <ShoppingCart className="h-6 w-6 text-app-green" />;
-    if (categoryName === 'Household') return <House className="h-5 w-5 text-app-active" />;
+    if (categoryName === 'Household') return <House className="h-5 w-5 text-app-blue" />;
     return <MoreHorizontal className="h-5 w-5 text-app-purple" />;
   };
 

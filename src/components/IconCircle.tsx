@@ -8,7 +8,7 @@ interface IconCircleProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const toneClasses: Record<NonNullable<IconCircleProps['tone']>, string> = {
-  blue: 'text-app-active bg-app-active/12 border-app-active/35',
+  blue: 'text-app-blue bg-app-blue/12 border-app-blue/35',
   green: 'text-app-green bg-app-green/12 border-app-green/35',
   purple: 'text-app-purple bg-app-purple/12 border-app-purple/35',
   orange: 'text-app-orange bg-app-orange/12 border-app-orange/35',

@@ -10,7 +10,7 @@ interface StatCardProps {
 }
 
 const toneClasses: Record<NonNullable<StatCardProps['tone']>, string> = {
-  blue: 'text-app-active',
+  blue: 'text-app-blue',
   green: 'text-app-green',
   purple: 'text-app-purple',
   orange: 'text-app-orange',

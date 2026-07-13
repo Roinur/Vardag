@@ -19,7 +19,7 @@ interface SuggestionCardProps {
 }
 
 const suggestionMeta = {
-  task: { label: 'Task', icon: Check, color: 'text-app-active' },
+  task: { label: 'Task', icon: Check, color: 'text-app-blue' },
   event: { label: 'Event', icon: CalendarDays, color: 'text-app-purple' },
   shopping: { label: 'Shopping', icon: ShoppingCart, color: 'text-app-green' },
   food: { label: 'Food', icon: ForkKnife, color: 'text-app-orange' }

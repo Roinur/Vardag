@@ -25,7 +25,7 @@ import type { SharingScope, ShoppingItem, Suggestion, SuggestionType, Task } fro
 
 const overviewPages = ['Summary', 'Focus'] as const;
 const intentMeta = {
-  task: { label: 'Task', icon: CheckSquare, tone: 'text-app-active' },
+  task: { label: 'Task', icon: CheckSquare, tone: 'text-app-blue' },
   event: { label: 'Event', icon: CalendarDays, tone: 'text-app-purple' },
   shopping: { label: 'Shopping', icon: ShoppingCart, tone: 'text-app-green' },
   food: { label: 'Food', icon: ForkKnife, tone: 'text-app-orange' }
@@ -458,7 +458,7 @@ function MiniCount({
   tone: 'blue' | 'purple' | 'green';
 }) {
   const toneClass = {
-    blue: 'text-app-active',
+    blue: 'text-app-blue',
     purple: 'text-app-purple',
     green: 'text-app-green'
   }[tone];
@@ -532,7 +532,7 @@ function OverviewRow({
 
 function RowIcon({ icon: Icon, tone }: { icon: LucideIcon; tone: 'blue' | 'green' | 'purple' }) {
   const toneClass = {
-    blue: 'text-app-active border-app-active/20 bg-app-active/10',
+    blue: 'text-app-blue border-app-blue/20 bg-app-blue/10',
     green: 'text-app-green border-app-green/20 bg-app-green/10',
     purple: 'text-app-purple border-app-purple/20 bg-app-purple/10'
   }[tone];

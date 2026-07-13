@@ -91,7 +91,7 @@ export function TasksPage() {
       <GlassCard className="mb-5">
         <SectionHeader
           title={sectionTitle}
-          icon={<CheckSquare className="h-6 w-6 text-app-active" />}
+          icon={<CheckSquare className="h-6 w-6 text-app-blue" />}
           action={t('Add task')}
           onAction={() => { setScope(scopeFilter); setAssignees([]); setIsAdding(true); }}
         />

@@ -5,7 +5,7 @@ import { Text } from './Typography';
 const priorityClasses: Record<Priority, string> = {
   high: 'bg-app-red',
   medium: 'bg-app-orange',
-  low: 'bg-app-active'
+  low: 'bg-app-blue'
 };
 
 export function PriorityDot({ priority }: { priority: Priority }) {
