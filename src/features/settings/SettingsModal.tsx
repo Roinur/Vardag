@@ -257,9 +257,23 @@ export function SettingsModal({ isOpen, onClose, theme, onThemeChange }: Setting
                           </button>
                         ) : null}
                       </div>
-                      <span className="family-center__role">{member.role === 'owner' ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}{t(member.role === 'owner' ? 'Owner' : member.role === 'adult' ? 'Adult' : 'Member')}</span>
+                      {canManageRoles && member.role !== 'owner' ? (
+                        <label className="family-center__role family-center__role-editor">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          <select
+                            className="family-center__role-select"
+                            value={member.role}
+                            aria-label={t('Role')}
+                            onChange={(event) => void setMemberRole(member.id, event.target.value as 'adult' | 'member').catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not change role')))}
+                          >
+                            <option value="adult">{t('Adult')}</option>
+                            <option value="member">{t('Member')}</option>
+                          </select>
+                        </label>
+                      ) : (
+                        <span className="family-center__role">{member.role === 'owner' ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}{t(member.role === 'owner' ? 'Owner' : member.role === 'adult' ? 'Adult' : 'Member')}</span>
+                      )}
                     </div>
-                    {canManageRoles && member.role !== 'owner' ? <div className="mt-2 flex justify-end"><select className="family-center__role-select" value={member.role} aria-label={t('Role')} onChange={(event) => void setMemberRole(member.id, event.target.value as 'adult' | 'member').catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not change role')))}><option value="adult">{t('Adult')}</option><option value="member">{t('Member')}</option></select></div> : null}
                   </div>
                 ))}
               </div>
