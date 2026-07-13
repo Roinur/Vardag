@@ -1,5 +1,5 @@
 import { CircleUserRound } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import type { PageId } from '../app/routes';
 import { useI18n } from '../app/I18nContext';
 import { BottomNav } from './BottomNav';
@@ -20,14 +20,16 @@ export function AppShell({ activePage, onNavigate, onOpenSettings, children }: A
   const identityAvatar = user?.identities
     ?.map((identity) => identity.identity_data?.avatar_url ?? identity.identity_data?.picture)
     .find(Boolean);
-  const avatarUrl = String(
-    resolvedAvatarUrl
-      || user?.user_metadata?.avatar_url
-      || user?.user_metadata?.picture
-      || identityAvatar
-      || profileAvatar
-      || ''
-  );
+  const avatarCandidates = useMemo(() => [...new Set([
+    resolvedAvatarUrl,
+    user?.user_metadata?.avatar_url,
+    user?.user_metadata?.picture,
+    identityAvatar,
+    profileAvatar
+  ].filter((value): value is string => typeof value === 'string' && value.length > 0))], [identityAvatar, profileAvatar, resolvedAvatarUrl, user?.user_metadata?.avatar_url, user?.user_metadata?.picture]);
+  const [avatarIndex, setAvatarIndex] = useState(0);
+  useEffect(() => setAvatarIndex(0), [avatarCandidates.join('|')]);
+  const avatarUrl = avatarCandidates[avatarIndex];
   return (
     <div className="meta-app min-h-dvh w-full overflow-x-hidden text-app-fg">
       <main className="mx-auto flex min-h-dvh w-full max-w-[460px] flex-col px-4 pb-24 pt-[calc(env(safe-area-inset-top)+0.9rem)] xs:px-5">
@@ -35,7 +37,7 @@ export function AppShell({ activePage, onNavigate, onOpenSettings, children }: A
           <div className="absolute right-0 top-3 z-10">
             {avatarUrl ? (
               <button type="button" className="profile-trigger" aria-label={t('Settings')} title={t('Settings')} onClick={onOpenSettings}>
-                <img src={avatarUrl} alt="" referrerPolicy="no-referrer" />
+                <img src={avatarUrl} alt="" referrerPolicy="no-referrer" onError={() => setAvatarIndex((current) => current + 1)} />
               </button>
             ) : (
               <IconCircle icon={CircleUserRound} label={t('Settings')} tone="muted" onClick={onOpenSettings} />

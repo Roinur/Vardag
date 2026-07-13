@@ -32,6 +32,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const canLoadAvatar = (url: string): Promise<boolean> => new Promise((resolve) => {
+  const image = new Image();
+  const timer = window.setTimeout(() => resolve(false), 4500);
+  image.referrerPolicy = 'no-referrer';
+  image.onload = () => { window.clearTimeout(timer); resolve(true); };
+  image.onerror = () => { window.clearTimeout(timer); resolve(false); };
+  image.src = url;
+});
+
 const parseHousehold = (value: unknown): HouseholdInfo | null => {
   const row = Array.isArray(value) ? value[0] : value;
   if (!row || typeof row !== 'object') return null;
@@ -62,19 +71,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const identityAvatar = user.identities
       ?.map((identity) => identity.identity_data?.avatar_url ?? identity.identity_data?.picture)
       .find(Boolean);
-    const knownAvatar = metadataAvatar ?? identityAvatar;
-    if (knownAvatar) {
-      setAvatarUrl(String(knownAvatar));
+    const candidates = [...new Set([metadataAvatar, identityAvatar].filter((value): value is string => typeof value === 'string' && value.length > 0))];
+    for (const candidate of candidates) {
+      if (!await canLoadAvatar(candidate)) continue;
+      setAvatarUrl(candidate);
+      void supabase?.from('profiles').update({ avatar_url: candidate }).eq('id', user.id);
       return;
     }
-    if (!nextSession.provider_token) return;
+    if (!nextSession.provider_token) {
+      setAvatarUrl('');
+      return;
+    }
     try {
       const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
         headers: { Authorization: `Bearer ${nextSession.provider_token}` }
       });
       if (!response.ok) return;
       const profile = await response.json() as { picture?: string };
-      if (profile.picture) setAvatarUrl(profile.picture);
+      if (profile.picture && await canLoadAvatar(profile.picture)) {
+        setAvatarUrl(profile.picture);
+        void supabase?.from('profiles').update({ avatar_url: profile.picture }).eq('id', user.id);
+      }
     } catch {
       // The generic profile icon remains available when Google userinfo is unreachable.
     }
