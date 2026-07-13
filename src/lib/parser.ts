@@ -204,11 +204,13 @@ export interface KnownPerson { id: string; name: string }
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
 const extractKnownPeople = (segment: string, people: KnownPerson[]): { text: string; matches: KnownPerson[] } => {
-  const matches = people.filter((person) => new RegExp(`\\b(?:till|åt|för|at|for)\\s+${escapeRegExp(person.name)}\\b`, 'iu').test(segment));
+  const recipientPrefix = '(?:till|åt|för|at|for|påminn|paminn|remind)';
+  const matchedPeople = people.filter((person) => new RegExp(`\\b${recipientPrefix}\\s+${escapeRegExp(person.name)}\\b`, 'iu').test(segment));
+  const matches = [...new Map(matchedPeople.map((person) => [person.id, person])).values()];
   if (!matches.length) return { text: segment, matches };
   const names = matches.map((person) => escapeRegExp(person.name)).join('|');
   return {
-    text: segment.replace(new RegExp(`\\s*\\b(?:till|åt|för|at|for)\\s+(?:${names})\\b`, 'giu'), '').replace(/\s+/gu, ' ').trim(),
+    text: segment.replace(new RegExp(`\\s*\\b${recipientPrefix}\\s+(?:${names})\\b`, 'giu'), '').replace(/\s+/gu, ' ').trim(),
     matches
   };
 };

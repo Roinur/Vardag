@@ -135,7 +135,6 @@ export function FoodPage() {
       <ScopePicker value={scopeFilter} onChange={setScopeFilter} className="mb-4" showLabel={false} />
 
       <section className="mb-4">
-        <SectionHeader title={t('Meal plans')} />
         <div className="meal-plan-actions">
           <button type="button" onClick={() => { setDecisionMode('fixed'); setPollVoters([]); setIsPlanning(true); }}>
             <Check className="h-5 w-5 text-app-green" />

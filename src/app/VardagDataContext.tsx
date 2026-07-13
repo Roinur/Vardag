@@ -421,7 +421,10 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
     await refresh();
     return {
       entryId: entry.id,
-      suggestions: parseEntryText(rawText, householdMembers.map((member) => ({ id: member.id, name: member.displayName }))).map((suggestion) => ({ ...suggestion, scope: suggestion.assigneeIds?.length ? 'family' : scope }))
+      suggestions: parseEntryText(rawText, householdMembers.flatMap((member) => [
+        { id: member.id, name: member.displayName },
+        ...(member.legalName !== member.displayName ? [{ id: member.id, name: member.legalName }] : [])
+      ])).map((suggestion) => ({ ...suggestion, scope: suggestion.assigneeIds?.length ? 'family' : scope }))
     };
   }, [householdMembers, refresh, syncRecord, user?.id]);
 

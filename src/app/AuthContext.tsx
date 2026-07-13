@@ -11,8 +11,10 @@ export interface HouseholdInfo {
 export interface HouseholdMember {
   id: string;
   displayName: string;
+  legalName: string;
+  nickname?: string;
   avatarUrl?: string;
-  role: 'owner' | 'member';
+  role: 'owner' | 'adult' | 'member';
 }
 
 interface AuthContextValue {
@@ -28,6 +30,8 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   joinHousehold: (code: string) => Promise<void>;
   refreshHouseholdMembers: () => Promise<void>;
+  setMemberNickname: (memberId: string, nickname: string) => Promise<void>;
+  setMemberRole: (memberId: string, role: 'adult' | 'member') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -109,20 +113,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setHouseholdMembers([]);
       return;
     }
-    const { data: profiles, error: profileError } = await supabase
+    const [{ data: profiles, error: profileError }, { data: aliases, error: aliasError }] = await Promise.all([
+      supabase
       .from('profiles')
       .select('id, display_name, avatar_url')
-      .in('id', ids);
+      .in('id', ids),
+      supabase.from('household_member_aliases').select('target_user_id, alias').eq('household_id', householdId)
+    ]);
     if (profileError) throw profileError;
+    if (aliasError) throw aliasError;
     const profileById = new Map((profiles ?? []).map((profile) => [String(profile.id), profile]));
+    const aliasById = new Map((aliases ?? []).map((alias) => [String(alias.target_user_id), String(alias.alias)]));
     setHouseholdMembers((memberships ?? []).map((membership) => {
       const id = String(membership.user_id);
       const profile = profileById.get(id);
       return {
         id,
-        displayName: String(profile?.display_name ?? 'Family member'),
+        legalName: String(profile?.display_name ?? 'Family member'),
+        displayName: aliasById.get(id) ?? String(profile?.display_name ?? 'Family member'),
+        nickname: aliasById.get(id),
         avatarUrl: profile?.avatar_url ? String(profile.avatar_url) : undefined,
-        role: membership.role === 'owner' ? 'owner' : 'member'
+        role: membership.role === 'owner' ? 'owner' : membership.role === 'adult' ? 'adult' : 'member'
       };
     }));
   }, []);
@@ -222,6 +233,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (nextHousehold) await loadHouseholdMembers(nextHousehold.id);
   }, [loadHouseholdMembers]);
 
+  const setMemberNickname = useCallback(async (memberId: string, nickname: string) => {
+    if (!supabase || !household || !session?.user.id) return;
+    const clean = nickname.trim();
+    const query = supabase.from('household_member_aliases');
+    const { error: aliasError } = clean
+      ? await query.upsert({ household_id: household.id, owner_user_id: session.user.id, target_user_id: memberId, alias: clean })
+      : await query.delete().eq('household_id', household.id).eq('owner_user_id', session.user.id).eq('target_user_id', memberId);
+    if (aliasError) throw aliasError;
+    await loadHouseholdMembers(household.id);
+  }, [household, loadHouseholdMembers, session?.user.id]);
+
+  const setMemberRole = useCallback(async (memberId: string, role: 'adult' | 'member') => {
+    if (!supabase || !household) return;
+    const { error: roleError } = await supabase.rpc('set_household_member_role', { target_user: memberId, new_role: role });
+    if (roleError) throw roleError;
+    await loadHouseholdMembers(household.id);
+  }, [household, loadHouseholdMembers]);
+
   const value = useMemo<AuthContextValue>(() => ({
     isConfigured: isSupabaseConfigured,
     isLoading,
@@ -235,7 +264,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     joinHousehold,
     refreshHouseholdMembers
-  }), [avatarUrl, error, household, isLoading, joinHousehold, refreshHouseholdMembers, session, signInWithGoogle, signOut, visibleHouseholdMembers]);
+    , setMemberNickname, setMemberRole
+  }), [avatarUrl, error, household, isLoading, joinHousehold, refreshHouseholdMembers, session, setMemberNickname, setMemberRole, signInWithGoogle, signOut, visibleHouseholdMembers]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

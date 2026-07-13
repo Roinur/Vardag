@@ -1,4 +1,4 @@
-import { Bell, Cloud, Copy, LogIn, LogOut, RefreshCw, Trash2, Users, X } from 'lucide-react';
+import { Bell, Cloud, Copy, Crown, LogIn, LogOut, Pencil, RefreshCw, ShieldCheck, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ThemeMode } from '../../app/App';
 import { useAuth } from '../../app/AuthContext';
@@ -23,11 +23,14 @@ const languageOptions: AppLanguage[] = ['en', 'sv'];
 export function SettingsModal({ isOpen, onClose, theme, onThemeChange }: SettingsModalProps) {
   const { language, setLanguage, t } = useI18n();
   const { clearData, cloudStatus, cloudError, syncNow, notificationFrequency, setNotificationFrequency } = useVardagData();
-  const { isConfigured, isLoading: authLoading, user, avatarUrl, household, householdMembers, error: authError, signInWithGoogle, signOut, joinHousehold, refreshHouseholdMembers } = useAuth();
+  const { isConfigured, isLoading: authLoading, user, avatarUrl, household, householdMembers, error: authError, signInWithGoogle, signOut, joinHousehold, refreshHouseholdMembers, setMemberNickname, setMemberRole } = useAuth();
   const [message, setMessage] = useState('');
   const [pendingClear, setPendingClear] = useState(false);
   const [familyCode, setFamilyCode] = useState('');
   const [showFamily, setShowFamily] = useState(false);
+  const [familyMessage, setFamilyMessage] = useState('');
+  const currentMember = householdMembers.find((member) => member.id === user?.id);
+  const canManageRoles = currentMember?.role === 'owner';
   useHistoryLayer(isOpen, 'settings', onClose);
 
   useEffect(() => {
@@ -208,19 +211,30 @@ export function SettingsModal({ isOpen, onClose, theme, onThemeChange }: Setting
 
         {showFamily ? (
           <div className="modal-backdrop fixed inset-0 z-[80] grid place-items-center px-5" onClick={() => setShowFamily(false)}>
-            <div className="identity-dialog" role="dialog" aria-modal="true" aria-label={t('Family members')} onClick={(event) => event.stopPropagation()}>
+            <div className="identity-dialog family-center" role="dialog" aria-modal="true" aria-label={t('Family center')} onClick={(event) => event.stopPropagation()}>
               <button type="button" className="icon-button absolute right-3 top-3" aria-label={t('Close')} onClick={() => setShowFamily(false)}><X className="h-4 w-4" /></button>
-              <Heading level={3} className="pr-10 text-lg">{t('Family members')}</Heading>
-              <Text className="mt-1 text-sm">{household?.inviteCode}</Text>
-              <div className="mt-4 grid gap-2">
+              <Heading level={3} className="pr-10 text-lg">{t('Family center')}</Heading>
+              <button type="button" className="family-center__code" onClick={() => navigator.clipboard?.writeText(household?.inviteCode ?? '')}>
+                <span><Text className="text-xs">{t('Family code')}</Text><Text className="font-semibold tracking-[0.12em] text-app-fg">{household?.inviteCode}</Text></span>
+                <Copy className="h-4 w-4" />
+              </button>
+              <div className="mt-4 grid gap-3">
                 {householdMembers.map((member) => (
-                  <div key={member.id} className="flex items-center gap-3 py-1.5">
-                    {member.avatarUrl ? <img className="h-9 w-9 rounded-full object-cover" src={member.avatarUrl} alt="" referrerPolicy="no-referrer" /> : <div className="grid h-9 w-9 place-items-center rounded-full bg-app-purple/10"><Users className="h-4 w-4 text-app-purple" /></div>}
-                    <Text className="min-w-0 flex-1 truncate font-semibold text-app-fg">{member.displayName}</Text>
-                    <Text className="text-xs">{t(member.role === 'owner' ? 'Owner' : 'Member')}</Text>
+                  <div key={member.id} className="family-center__member">
+                    <div className="flex items-center gap-3">
+                      {member.avatarUrl ? <img className="h-10 w-10 rounded-full object-cover" src={member.avatarUrl} alt="" referrerPolicy="no-referrer" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-app-purple/10"><Users className="h-4 w-4 text-app-purple" /></div>}
+                      <div className="min-w-0 flex-1"><Text className="truncate font-semibold text-app-fg">{member.displayName}</Text>{member.nickname ? <Text className="truncate text-xs">{member.legalName}</Text> : null}</div>
+                      <span className="family-center__role">{member.role === 'owner' ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}{t(member.role === 'owner' ? 'Owner' : member.role === 'adult' ? 'Adult' : 'Member')}</span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+                      <label className="family-center__nickname"><Pencil className="h-3.5 w-3.5" /><input defaultValue={member.nickname ?? ''} placeholder={t('Your nickname for {name}', { name: member.legalName })} aria-label={t('Nickname')} onBlur={(event) => void setMemberNickname(member.id, event.target.value).then(() => setFamilyMessage(t('Nickname saved'))).catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not save nickname')))} /></label>
+                      {canManageRoles && member.role !== 'owner' ? <select className="family-center__role-select" value={member.role} aria-label={t('Role')} onChange={(event) => void setMemberRole(member.id, event.target.value as 'adult' | 'member').catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not change role')))}><option value="adult">{t('Adult')}</option><option value="member">{t('Member')}</option></select> : null}
+                    </div>
                   </div>
                 ))}
               </div>
+              <Text className="mt-3 text-xs">{t('Nicknames are private to you and work in Detect Cards.')}</Text>
+              {familyMessage ? <Text className="mt-2 text-xs text-app-green" role="status">{familyMessage}</Text> : null}
             </div>
           </div>
         ) : null}

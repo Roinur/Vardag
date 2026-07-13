@@ -391,6 +391,25 @@ button:active:not(:disabled) {
 
 .scope-identity-button:active { transform: scale(0.94); }
 .scope-identity-button.is-family { color: #a982ff; background: rgb(169 130 255 / 0.1); }
+
+.family-center { width: min(100%, 410px); max-height: min(760px, calc(100dvh - 2rem)); overflow-y: auto; }
+.family-center__code { display: flex; width: 100%; align-items: center; justify-content: space-between; margin-top: .75rem; padding: .7rem .85rem; border: 1px solid rgb(var(--app-contrast-rgb) / .1); border-radius: 14px; text-align: left; background: rgb(var(--app-contrast-rgb) / .035); color: var(--app-muted); }
+.family-center__member { padding: .75rem; border: 1px solid rgb(var(--app-contrast-rgb) / .09); border-radius: 16px; background: rgb(var(--app-contrast-rgb) / .025); }
+.family-center__role { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; color: var(--app-muted); }
+.family-center__nickname { display: flex; min-width: 0; align-items: center; gap: .4rem; padding: 0 .65rem; border: 1px solid rgb(var(--app-contrast-rgb) / .1); border-radius: 12px; color: var(--app-muted); }
+.family-center__nickname input { width: 100%; min-width: 0; height: 2.35rem; border: 0; outline: 0; background: transparent; color: var(--app-fg); font-size: .78rem; }
+.family-center__role-select { height: 2.35rem; border: 1px solid rgb(var(--app-contrast-rgb) / .1); border-radius: 12px; padding: 0 .55rem; background: var(--app-card); color: var(--app-fg); font-size: .75rem; }
+.family-week { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 72%); gap: .7rem; overflow-x: auto; padding: .15rem .05rem .65rem; scroll-snap-type: x proximity; scrollbar-width: none; }
+.family-week::-webkit-scrollbar { display: none; }
+.family-week__column { min-height: 190px; padding: .8rem; border: 1px solid rgb(var(--app-contrast-rgb) / .1); border-radius: 18px; background: var(--app-card); scroll-snap-align: start; }
+.family-week__person { display: flex; align-items: center; gap: .6rem; padding-bottom: .7rem; border-bottom: 1px solid rgb(var(--app-contrast-rgb) / .08); }
+.family-week__person img, .family-week__person > span { width: 2.25rem; height: 2.25rem; border-radius: 999px; object-fit: cover; display: grid; place-items: center; background: rgb(169 130 255 / .12); color: #a982ff; font-weight: 700; }
+.family-week__tasks { display: grid; gap: .45rem; padding-top: .65rem; }
+.family-week__task { display: flex; align-items: flex-start; gap: .5rem; width: 100%; padding: .6rem; border-radius: 12px; text-align: left; background: rgb(var(--app-contrast-rgb) / .035); color: var(--app-fg); }
+.family-week__task span { display: grid; min-width: 0; }
+.family-week__task strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+.family-week__task small { margin-top: .15rem; color: var(--app-muted); font-size: .68rem; }
+.family-week__empty { padding: 1.3rem .4rem; text-align: center; font-size: .78rem; }
 .scope-identity-button.is-personal { color: #3ca8ff; background: rgb(60 168 255 / 0.1); }
 .scope-identity-button img { width: 100%; height: 100%; object-fit: cover; }
 

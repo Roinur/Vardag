@@ -92,7 +92,11 @@ try {
   assert.deepEqual(assigned[0].assigneeIds, ['member-alex']);
   assert.deepEqual(assigned[0].assigneeNames, ['Alex']);
 
-  console.log('Detect Cards parser and live intents: 16 scenarios passed');
+  const nicknameAssignment = parseEntryText('Påminn Kitty kl 17 om att hämta paket på Ica', [{ id: 'member-kitty', name: 'Kitty' }]);
+  assert.deepEqual(nicknameAssignment[0].assigneeIds, ['member-kitty']);
+  assert.equal(nicknameAssignment[0].scope, 'family');
+
+  console.log('Detect Cards parser and live intents: 17 scenarios passed');
 } finally {
   await server.close();
 }
