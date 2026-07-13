@@ -1,65 +1,92 @@
-# Vardag
+<h1 align="center">Vardag</h1>
 
-Vardag is a self-hosted, mobile-first family organizer for tasks, events, shopping, meals, leftovers, and shared food votes. It is an installable PWA with Swedish and English interfaces, local-first storage, Google accounts, realtime family sync, database-enforced privacy, and background assignment notifications.
+<p align="center"><strong>A calm, self-hosted family organizer for everyday life.</strong></p>
+<p align="center">Tasks · Events · Shopping · Meals · Family</p>
 
-> **Project status: Early beta**<br>
-> Vardag is usable and actively developed, but self-hosters should expect occasional schema and setup changes before a stable release.
+<p align="center">
+  <img src="https://img.shields.io/badge/status-early_beta-F59E0B" alt="Project status: Early beta">
+  <img src="https://img.shields.io/badge/PWA-installable-3DA8FF" alt="Installable PWA">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-65D995" alt="MIT License"></a>
+  <a href="https://github.com/Roinur/Vardag/actions/workflows/ci.yml"><img src="https://github.com/Roinur/Vardag/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+</p>
+
+Vardag is a mobile-first family organizer for tasks, events, shopping, meals, leftovers, and shared food votes. It combines local-first storage with Google accounts, realtime family sync, database-enforced privacy, and background assignment notifications.
+
+<p align="center"><sub><strong>Project status: Early beta.</strong> Usable and actively developed; self-hosters should expect occasional schema and setup changes before a stable release.</sub></p>
 
 Each family deploys and owns its own instance. This repository does not connect to a shared Vardag service and does not include a hosted demo, production URL, Supabase project, or credentials.
 
-## Screenshots
+## Overview
 
 <p align="center">
-  <img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today overview in light mode" width="460">
+  <img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today overview in light mode" width="540">
 </p>
 <p align="center"><strong>Today</strong> brings the family's tasks, events, shopping, and quick capture into one calm overview.</p>
 
-<h3 align="center">Light mode</h3>
+## Feature highlights
 
-<table align="center" width="600">
+<table align="center" width="720">
   <tr>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-tasks-light.png" alt="Vardag Tasks in light mode" width="250"></td>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-events-light.png" alt="Vardag Events in light mode" width="250"></td>
+    <td width="300" valign="middle">
+      <h3>Plan the day</h3>
+      Capture tasks quickly, set priorities and repeats, then focus on what matters now.
+    </td>
+    <td width="420" align="center"><img src="docs/screenshots/vardag-tasks-light.png" alt="Tasks, priorities, and daily planning in Vardag" width="270"></td>
   </tr>
   <tr>
-    <td align="center">Tasks</td>
-    <td align="center">Events</td>
+    <td width="300" valign="middle">
+      <h3>Keep everyone in sync</h3>
+      Share events and assignments with the whole family or the people they concern.
+    </td>
+    <td width="420" align="center"><img src="docs/screenshots/vardag-events-light.png" alt="Shared family calendar in Vardag" width="270"></td>
   </tr>
   <tr>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-shopping-light.png" alt="Vardag Shopping in light mode" width="250"></td>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-food-light.png" alt="Vardag Food and family votes in light mode" width="250"></td>
-  </tr>
-  <tr>
-    <td align="center">Shopping</td>
-    <td align="center">Food and votes</td>
+    <td width="300" valign="middle">
+      <h3>Run the household</h3>
+      Keep shopping, meal decisions, family votes, and leftovers in the same shared flow.
+    </td>
+    <td width="420" align="center">
+      <img src="docs/screenshots/vardag-shopping-light.png" alt="Shared shopping in Vardag" width="190">
+      <img src="docs/screenshots/vardag-food-light.png" alt="Meals and family food votes in Vardag" width="190">
+    </td>
   </tr>
 </table>
 
-<h3 align="center">Dark mode</h3>
+<details>
+<summary><strong>View all screenshots</strong></summary>
+
+<br>
 
 <table align="center" width="600">
   <tr>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today in dark mode" width="250"></td>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag Tasks in dark mode" width="250"></td>
+    <th width="300">Light</th>
+    <th width="300">Dark</th>
   </tr>
   <tr>
-    <td align="center">Today</td>
-    <td align="center">Tasks</td>
+    <td align="center"><img src="docs/screenshots/vardag-today-light.png" alt="Today in light mode" width="230"><br><strong>Today</strong></td>
+    <td align="center"><img src="docs/screenshots/vardag-today-dark.png" alt="Today in dark mode" width="230"><br><strong>Today</strong></td>
   </tr>
   <tr>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-events-dark.png" alt="Vardag Events in dark mode" width="250"></td>
-    <td align="center" width="300"><img src="docs/screenshots/vardag-shopping-dark.png" alt="Vardag Shopping in dark mode" width="250"></td>
+    <td align="center"><img src="docs/screenshots/vardag-tasks-light.png" alt="Tasks in light mode" width="230"><br><strong>Tasks</strong></td>
+    <td align="center"><img src="docs/screenshots/vardag-tasks-dark.png" alt="Tasks in dark mode" width="230"><br><strong>Tasks</strong></td>
   </tr>
   <tr>
-    <td align="center">Events</td>
-    <td align="center">Shopping</td>
+    <td align="center"><img src="docs/screenshots/vardag-events-light.png" alt="Events in light mode" width="230"><br><strong>Events</strong></td>
+    <td align="center"><img src="docs/screenshots/vardag-events-dark.png" alt="Events in dark mode" width="230"><br><strong>Events</strong></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag Food and family votes in dark mode" width="250"><br><strong>Food and votes</strong></td>
+    <td align="center"><img src="docs/screenshots/vardag-shopping-light.png" alt="Shopping in light mode" width="230"><br><strong>Shopping</strong></td>
+    <td align="center"><img src="docs/screenshots/vardag-shopping-dark.png" alt="Shopping in dark mode" width="230"><br><strong>Shopping</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/vardag-food-light.png" alt="Food in light mode" width="230"><br><strong>Food and votes</strong></td>
+    <td align="center"><img src="docs/screenshots/vardag-food-dark.png" alt="Food in dark mode" width="230"><br><strong>Food and votes</strong></td>
   </tr>
 </table>
 
-The screenshots use synthetic local data. No real family account or hosted instance is included.
+</details>
+
+<p align="center"><sub>Screenshots use synthetic local data. No real family account or hosted instance is included.</sub></p>
 
 ## Features
 
