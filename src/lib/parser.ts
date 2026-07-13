@@ -199,25 +199,47 @@ const detectExplicit = (type: SuggestionType, content: string): Suggestion[] => 
   return [detectTask(content)].filter((item): item is TaskSuggestion => Boolean(item));
 };
 
-const detectSegment = (segment: string): Suggestion[] => {
+export interface KnownPerson { id: string; name: string }
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+
+const extractKnownPeople = (segment: string, people: KnownPerson[]): { text: string; matches: KnownPerson[] } => {
+  const matches = people.filter((person) => new RegExp(`\\b(?:till|åt|för|at|for)\\s+${escapeRegExp(person.name)}\\b`, 'iu').test(segment));
+  if (!matches.length) return { text: segment, matches };
+  const names = matches.map((person) => escapeRegExp(person.name)).join('|');
+  return {
+    text: segment.replace(new RegExp(`\\s*\\b(?:till|åt|för|at|for)\\s+(?:${names})\\b`, 'giu'), '').replace(/\s+/gu, ' ').trim(),
+    matches
+  };
+};
+
+const detectSegment = (sourceSegment: string, people: KnownPerson[] = []): Suggestion[] => {
+  const { text: segment, matches } = extractKnownPeople(sourceSegment, people);
+  const assignment = matches.length ? {
+    assigneeId: matches[0].id,
+    assigneeName: matches[0].name,
+    assigneeIds: matches.map((person) => person.id),
+    assigneeNames: matches.map((person) => person.name),
+    scope: 'family' as const
+  } : {};
   const explicit = segment.match(explicitPattern);
-  if (explicit) return detectExplicit(explicitTypes[explicit[1].toLocaleLowerCase('sv')], explicit[2]);
+  if (explicit) return detectExplicit(explicitTypes[explicit[1].toLocaleLowerCase('sv')], explicit[2]).map((suggestion) => ({ ...suggestion, ...assignment }));
 
   if (foodActionTrigger.test(segment)) {
-    return [detectFood(segment)].filter((item): item is FoodSuggestion => Boolean(item));
+    return [detectFood(segment)].filter((item): item is FoodSuggestion => Boolean(item)).map((suggestion) => ({ ...suggestion, ...assignment }));
   }
-  if (shoppingTrigger.test(segment)) return detectShopping(segment);
+  if (shoppingTrigger.test(segment)) return detectShopping(segment).map((suggestion) => ({ ...suggestion, ...assignment }));
   if (taskTrigger.test(segment)) {
-    return [detectTask(segment)].filter((item): item is TaskSuggestion => Boolean(item));
+    return [detectTask(segment)].filter((item): item is TaskSuggestion => Boolean(item)).map((suggestion) => ({ ...suggestion, ...assignment }));
   }
   if (eventTrigger.test(segment) || parseTimePhrase(segment)) {
-    return [detectEvent(segment)].filter((item): item is EventSuggestion => Boolean(item));
+    return [detectEvent(segment)].filter((item): item is EventSuggestion => Boolean(item)).map((suggestion) => ({ ...suggestion, ...assignment }));
   }
   if (foodTrigger.test(segment)) {
-    return [detectFood(segment)].filter((item): item is FoodSuggestion => Boolean(item));
+    return [detectFood(segment)].filter((item): item is FoodSuggestion => Boolean(item)).map((suggestion) => ({ ...suggestion, ...assignment }));
   }
 
-  return [detectTask(segment)].filter((item): item is TaskSuggestion => Boolean(item));
+  return [detectTask(segment)].filter((item): item is TaskSuggestion => Boolean(item)).map((suggestion) => ({ ...suggestion, ...assignment }));
 };
 
 const splitIntentClauses = (segment: string): string[] =>
@@ -227,13 +249,13 @@ const splitIntentClauses = (segment: string): string[] =>
     .map((part) => part.trim())
     .filter(Boolean);
 
-export const parseEntryText = (rawText: string): Suggestion[] => {
+export const parseEntryText = (rawText: string, people: KnownPerson[] = []): Suggestion[] => {
   const segments = rawText
     .split(sentenceSplitPattern)
     .flatMap(splitIntentClauses)
     .map((part) => part.trim())
     .filter(Boolean);
-  const suggestions = segments.flatMap(detectSegment);
+  const suggestions = segments.flatMap((segment) => detectSegment(segment, people));
   const seen = new Set<string>();
   return suggestions.filter((suggestion) => {
     const title = suggestion.type === 'shopping' ? suggestion.name : suggestion.title;

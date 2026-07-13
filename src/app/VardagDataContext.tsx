@@ -35,6 +35,7 @@ import { byCreatedDesc, dateTimeISO, todayISO, uid } from '../lib/utils';
 import { nextRecurringDate } from '../lib/recurrence';
 import { showNewTaskNotification, updateTodayNotification } from '../lib/notifications';
 import { registerPushSubscription, sendTaskAssignmentPush } from '../lib/pushSubscriptions';
+import { haptic, signalRealtimeArrival } from '../lib/motion';
 
 type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'status'> & Partial<Pick<Task, 'status'>>;
 type CreateEventInput = Omit<CalendarEvent, 'id' | 'createdAt'>;
@@ -409,7 +410,7 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
       .channel(`vardag-${household.id}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'vardag_records', filter: `household_id=eq.${household.id}`
-      }, () => void syncNow())
+      }, () => void syncNow().then(signalRealtimeArrival))
       .subscribe();
     return () => { void client.removeChannel(channel); };
   }, [household?.id, syncNow]);
@@ -418,8 +419,11 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
     const entry: Entry = { id: uid('entry'), rawText, createdAt: dateTimeISO(), entryDate: todayISO(), scope, ownerId: user?.id };
     await syncRecord('entries', entry);
     await refresh();
-    return { entryId: entry.id, suggestions: parseEntryText(rawText).map((suggestion) => ({ ...suggestion, scope })) };
-  }, [refresh, syncRecord, user?.id]);
+    return {
+      entryId: entry.id,
+      suggestions: parseEntryText(rawText, householdMembers.map((member) => ({ id: member.id, name: member.displayName }))).map((suggestion) => ({ ...suggestion, scope: suggestion.assigneeIds?.length ? 'family' : scope }))
+    };
+  }, [householdMembers, refresh, syncRecord, user?.id]);
 
   const addTask = useCallback(async (task: CreateTaskInput) => {
     const record: Task = { ...task, ownerId: task.ownerId ?? user?.id, scope: task.scope ?? 'family', id: uid('task'), status: task.status ?? 'todo', createdAt: dateTimeISO() };
@@ -433,6 +437,7 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
     if (remote) await db.tasks.put(record);
     else await syncCompletion('tasks', record, completed);
     await refresh();
+    if (completed) haptic('success');
     if (record.status === 'done' && task.repeat && task.repeat !== 'none' && task.dueDate) {
       const nextDate = nextRecurringDate(task.dueDate, task.repeat);
       const exists = await db.tasks.filter((candidate) => candidate.status === 'todo' && candidate.title === task.title && candidate.dueDate === nextDate && candidate.repeat === task.repeat).first();
@@ -458,6 +463,7 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
     if (remote) await db.events.put(record);
     else await syncCompletion('events', record, completed);
     await refresh();
+    if (completed) haptic('success');
   }, [refresh, setRemoteCompletion, syncCompletion]);
 
   const deleteEvent = useCallback(async (id: string) => {
@@ -476,6 +482,7 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
     if (remote) await db.shoppingItems.put(record);
     else await syncCompletion('shopping_items', record, completed);
     await refresh();
+    if (completed) haptic('success');
   }, [refresh, setRemoteCompletion, syncCompletion]);
 
   const deleteShoppingItem = useCallback(async (id: string) => {

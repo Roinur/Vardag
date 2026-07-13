@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ForkKnife, Pencil, ShoppingCart, Trash2 } from 'lucide-react';
+import { CalendarDays, Check, Clock3, ForkKnife, Hash, Pencil, ShoppingCart, Trash2, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { MealType, Priority, Suggestion, SuggestionType } from '../types/models';
 import { useI18n } from '../app/I18nContext';
@@ -15,6 +15,7 @@ interface SuggestionCardProps {
   suggestion: Suggestion;
   onAccept: (suggestion: Suggestion) => void;
   onIgnore: (id: string) => void;
+  confirmingFamily?: boolean;
 }
 
 const suggestionMeta = {
@@ -61,7 +62,7 @@ export const convertSuggestion = (suggestion: Suggestion, type: SuggestionType):
   return { id: suggestion.id, type, title, eatenAt: date, mealType: 'other', scope, ...assignment };
 };
 
-export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCardProps) {
+export function SuggestionCard({ suggestion, onAccept, onIgnore, confirmingFamily = false }: SuggestionCardProps) {
   const { locale, t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<Suggestion>(suggestion);
@@ -69,16 +70,16 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCar
   const Icon = meta.icon;
 
   const summary = useMemo(() => {
-    if (draft.type === 'task') return [draft.category ? t(draft.category) : undefined, draft.dueDate ? `${t('Due')} ${formatShortDate(draft.dueDate, locale)}` : t(draft.priority.slice(0, 1).toUpperCase() + draft.priority.slice(1))].filter(Boolean).join(' - ');
-    if (draft.type === 'event') return [formatShortDate(draft.startDate, locale), draft.startTime, draft.location].filter(Boolean).join(' - ');
-    if (draft.type === 'shopping') return [draft.quantity, t(draft.category ?? 'Shopping')].filter(Boolean).join(' - ');
-    return [draft.mealType ? t(draft.mealType.slice(0, 1).toUpperCase() + draft.mealType.slice(1)) : undefined, formatShortDate(draft.eatenAt, locale), draft.portionsLeft ? `${draft.portionsLeft} ${t('left')}` : undefined].filter(Boolean).join(' - ');
-  }, [draft, locale, t]);
+    if (draft.type === 'task') return [draft.category ? t(draft.category) : undefined, t(draft.priority.slice(0, 1).toUpperCase() + draft.priority.slice(1))].filter(Boolean).join(' - ');
+    if (draft.type === 'event') return draft.location;
+    if (draft.type === 'shopping') return t(draft.category ?? 'Shopping');
+    return draft.mealType ? t(draft.mealType.slice(0, 1).toUpperCase() + draft.mealType.slice(1)) : undefined;
+  }, [draft, t]);
 
   const valid = suggestionTitle(draft).trim().length > 0;
 
   return (
-    <GlassCard className="mb-3" padded>
+    <GlassCard className={`mb-3 detected-card ${confirmingFamily ? 'is-family-sent' : ''}`} padded>
       {isEditing ? (
         <>
           <Text className="mb-1.5 text-xs font-semibold text-app-fg">{t('Card type')}</Text>
@@ -119,10 +120,9 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCar
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <Text className={`text-xs font-semibold uppercase ${meta.color}`}>{t(meta.label)}</Text>
-              <Text as="span" className="truncate text-[0.68rem]">{draft.assigneeNames?.join(', ') || draft.assigneeName || t((draft.scope ?? 'family') === 'family' ? 'Family' : 'Personal')}</Text>
             </div>
-              <Text className="mt-1 truncate text-base font-semibold text-app-fg">{suggestionTitle(draft)}</Text>
-              <Text className="mt-0.5 text-sm">{summary}</Text>
+              <InterpretationPreview draft={draft} onChange={setDraft} />
+              {summary ? <Text className="mt-0.5 text-sm">{summary}</Text> : null}
           </div>
         </div>
       )}
@@ -155,6 +155,57 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCar
         </button>
       </div>
     </GlassCard>
+  );
+}
+
+type InterpretedPart = 'date' | 'time' | 'quantity' | 'person';
+
+function InterpretationPreview({ draft, onChange }: { draft: Suggestion; onChange: (suggestion: Suggestion) => void }) {
+  const { locale, t } = useI18n();
+  const [activePart, setActivePart] = useState<InterpretedPart>();
+  const person = draft.assigneeNames?.join(', ') || draft.assigneeName || t((draft.scope ?? 'family') === 'family' ? 'Family' : 'Personal');
+  const parts: Array<{ key: InterpretedPart; label: string; tone: string; icon: typeof CalendarDays }> = [];
+  if (draft.type === 'task' && draft.dueDate) parts.push({ key: 'date', label: formatShortDate(draft.dueDate, locale), tone: 'date', icon: CalendarDays });
+  if (draft.type === 'event') {
+    parts.push({ key: 'date', label: formatShortDate(draft.startDate, locale), tone: 'date', icon: CalendarDays });
+    if (draft.startTime) parts.push({ key: 'time', label: draft.startTime, tone: 'time', icon: Clock3 });
+  }
+  if (draft.type === 'shopping' && draft.quantity) parts.push({ key: 'quantity', label: draft.quantity, tone: 'quantity', icon: Hash });
+  if (draft.type === 'food') {
+    parts.push({ key: 'date', label: formatShortDate(draft.eatenAt, locale), tone: 'date', icon: CalendarDays });
+    if (draft.portionsLeft !== undefined) parts.push({ key: 'quantity', label: `${draft.portionsLeft} ${t('left')}`, tone: 'quantity', icon: Hash });
+  }
+  parts.push({ key: 'person', label: person, tone: 'person', icon: UserRound });
+
+  const setAssignees = (members: Array<{ id: string; name: string }>) => onChange({
+    ...draft,
+    assigneeId: members[0]?.id,
+    assigneeName: members[0]?.name,
+    assigneeIds: members.map((member) => member.id),
+    assigneeNames: members.map((member) => member.name)
+  });
+
+  return (
+    <>
+      <div className="interpretation-line">
+        <Text as="span" className="interpretation-title">{suggestionTitle(draft)}</Text>
+        {parts.map((part) => {
+          const PartIcon = part.icon;
+          return <button key={part.key} type="button" className={`interpretation-token interpretation-token--${part.tone} ${activePart === part.key ? 'is-active' : ''}`} onClick={() => setActivePart((current) => current === part.key ? undefined : part.key)}><PartIcon className="h-3.5 w-3.5" /><span>{part.label}</span></button>;
+        })}
+      </div>
+      {activePart ? (
+        <div className="interpretation-correction">
+          {activePart === 'date' && draft.type === 'task' ? <input aria-label={t('Due date')} className="form-control" type="date" value={draft.dueDate ?? ''} onChange={(event) => onChange({ ...draft, dueDate: event.target.value || undefined })} /> : null}
+          {activePart === 'date' && draft.type === 'event' ? <input aria-label={t('Date')} className="form-control" type="date" value={draft.startDate} onChange={(event) => onChange({ ...draft, startDate: event.target.value })} /> : null}
+          {activePart === 'date' && draft.type === 'food' ? <input aria-label={t('Date')} className="form-control" type="date" value={draft.eatenAt} onChange={(event) => onChange({ ...draft, eatenAt: event.target.value })} /> : null}
+          {activePart === 'time' && draft.type === 'event' ? <input aria-label={t('Time')} className="form-control" type="time" value={draft.startTime ?? ''} onChange={(event) => onChange({ ...draft, startTime: event.target.value || undefined })} /> : null}
+          {activePart === 'quantity' && draft.type === 'shopping' ? <input aria-label={t('Quantity')} className="form-control" value={draft.quantity ?? ''} onChange={(event) => onChange({ ...draft, quantity: event.target.value || undefined })} autoFocus /> : null}
+          {activePart === 'quantity' && draft.type === 'food' ? <input aria-label={t('Portions left')} className="form-control" type="number" min="0" value={draft.portionsLeft ?? ''} onChange={(event) => onChange({ ...draft, portionsLeft: event.target.value ? Number(event.target.value) : undefined })} autoFocus /> : null}
+          {activePart === 'person' ? <ScopePicker value={draft.scope ?? 'family'} onChange={(scope) => onChange({ ...draft, scope, ...(scope === 'personal' ? { assigneeId: undefined, assigneeName: undefined, assigneeIds: [], assigneeNames: [] } : {}) })} assigneeIds={draft.assigneeIds ?? (draft.assigneeId ? [draft.assigneeId] : [])} onAssigneesChange={setAssignees} compact allowAssignee showLabel={false} /> : null}
+        </div>
+      ) : null}
+    </>
   );
 }
 

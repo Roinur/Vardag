@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vardag-shell-v15';
+const CACHE_NAME = 'vardag-shell-v16';
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png'];
 
 self.addEventListener('install', (event) => {

@@ -84,6 +84,7 @@ const sv: Record<string, string> = {
   'Photo ready': 'Bilden är klar', 'Checking photo...': 'Kontrollerar bilden...', 'Product photo': 'Produktbild',
   'Unknown product': 'Okänd vara', 'Try again': 'Försök igen', 'Use item': 'Använd varan', 'Choose photo': 'Välj bild',
   'Take photo': 'Ta bild', 'Automatic barcode scanning is not supported in this browser.': 'Den här webbläsaren stöder inte automatisk streckkodsläsning.',
+  'EAN-13, EAN-8 and UPC': 'EAN-13, EAN-8 och UPC',
   'View photo': 'Visa bild', 'Remove photo': 'Ta bort bild', 'Choose recipient': 'Välj mottagare', Everyone: 'Alla',
   'Family member': 'Familjemedlem', 'Use as': 'Använd som', 'Change card type': 'Ändra korttyp',
   'Confirmed card types': 'Bekräftade korttyper', and: 'och',

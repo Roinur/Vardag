@@ -86,7 +86,13 @@ try {
   const thirdHint = detectIntentHint(multiSentence, new Set([0, 1]));
   assert.equal(thirdHint.trigger.toLocaleLowerCase('sv'), 'städa');
 
-  console.log('Detect Cards parser and live intents: 15 scenarios passed');
+  const assigned = parseEntryText('Köp fem liter mjölk till Alex imorgon', [{ id: 'member-alex', name: 'Alex' }]);
+  assert.equal(assigned[0].name, 'Mjölk');
+  assert.equal(assigned[0].quantity, '5 liter');
+  assert.deepEqual(assigned[0].assigneeIds, ['member-alex']);
+  assert.deepEqual(assigned[0].assigneeNames, ['Alex']);
+
+  console.log('Detect Cards parser and live intents: 16 scenarios passed');
 } finally {
   await server.close();
 }

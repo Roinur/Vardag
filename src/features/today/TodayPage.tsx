@@ -18,6 +18,7 @@ import { SuggestionCard } from '../../components/SuggestionCard';
 import { Heading, Text } from '../../components/Typography';
 import { formatShortDate, todayISO } from '../../lib/utils';
 import { detectIntentHint, explicitIntentLabel } from '../../lib/intentDetection';
+import { haptic } from '../../lib/motion';
 import { occursOnDate } from '../../lib/recurrence';
 import { isRecordVisibleToUser } from '../../lib/recordVisibility';
 import type { SharingScope, ShoppingItem, Suggestion, SuggestionType, Task } from '../../types/models';
@@ -55,6 +56,7 @@ export function TodayPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [parserMessage, setParserMessage] = useState('');
   const [isParsing, setIsParsing] = useState(false);
+  const [familySendingId, setFamilySendingId] = useState<string>();
   const [scopeFilter, setScopeFilter] = useState<SharingScope>('family');
   const [activeOverview, setActiveOverview] = useState(0);
   const overviewTrackRef = useRef<HTMLDivElement | null>(null);
@@ -106,7 +108,13 @@ export function TodayPage() {
 
   const handleAccept = async (suggestion: Suggestion) => {
     await acceptSuggestion(suggestion, entryId);
+    if ((suggestion.scope ?? scopeFilter) === 'family') {
+      setFamilySendingId(suggestion.id);
+      haptic('family');
+      await new Promise((resolve) => window.setTimeout(resolve, 280));
+    } else haptic('success');
     setSuggestions((current) => current.filter((item) => item.id !== suggestion.id));
+    setFamilySendingId(undefined);
   };
 
   const jumpToOverview = (index: number) => {
@@ -223,6 +231,7 @@ export function TodayPage() {
             <SuggestionCard
               key={suggestion.id}
               suggestion={suggestion}
+              confirmingFamily={familySendingId === suggestion.id}
               onAccept={handleAccept}
               onIgnore={(id) => setSuggestions((current) => current.filter((item) => item.id !== id))}
             />
@@ -279,7 +288,7 @@ function SwipeComplete({ children, onComplete }: { children: ReactNode; onComple
     const nextReached = Math.abs(nextOffset) > 72;
     if (nextReached !== thresholdReached.current) {
       thresholdReached.current = nextReached;
-      navigator.vibrate?.(nextReached ? 18 : 8);
+      haptic('light');
     }
     setOffset(nextOffset);
   };

@@ -1,4 +1,5 @@
 import { Barcode, Camera, Check, ImagePlus, LoaderCircle, RefreshCw, ScanLine } from 'lucide-react';
+import type { BrowserMultiFormatReader } from '@zxing/browser';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../app/I18nContext';
 import { EntrySheet } from './EntrySheet';
@@ -42,15 +43,17 @@ const resizePhoto = async (file: Blob): Promise<string> => {
 };
 
 const lookupProduct = async (barcode: string): Promise<ProductCaptureResult> => {
-  const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=product_name,brands,image_front_small_url`);
+  const normalizedBarcode = barcode.replace(/\D/gu, '').padStart(13, '0');
+  const fields = 'code,product_name,product_name_sv,generic_name_sv,brands,image_front_url,image_front_small_url';
+  const response = await fetch(`https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(normalizedBarcode)}.json?fields=${fields}&product_type=all&lc=sv&cc=se`);
   if (!response.ok) return { barcode };
-  const data = await response.json() as { status?: number; product?: { product_name?: string; brands?: string; image_front_small_url?: string } };
-  if (data.status !== 1 || !data.product) return { barcode };
+  const data = await response.json() as { product?: { product_name?: string; product_name_sv?: string; generic_name_sv?: string; brands?: string; image_front_url?: string; image_front_small_url?: string } };
+  if (!data.product) return { barcode };
   return {
     barcode,
-    name: data.product.product_name?.trim() || undefined,
+    name: data.product.product_name_sv?.trim() || data.product.product_name?.trim() || data.product.generic_name_sv?.trim() || undefined,
     brand: data.product.brands?.split(',')[0]?.trim() || undefined,
-    imageUrl: data.product.image_front_small_url || undefined
+    imageUrl: data.product.image_front_url || data.product.image_front_small_url || undefined
   };
 };
 
@@ -60,6 +63,7 @@ export function ProductCaptureSheet({ isOpen, onClose, onUse }: ProductCaptureSh
   const fileRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream>();
   const detectorRef = useRef<BarcodeDetectorLike | null>(null);
+  const zxingRef = useRef<BrowserMultiFormatReader>();
   const busyRef = useRef(false);
   const [result, setResult] = useState<ProductCaptureResult>();
   const [status, setStatus] = useState('');
@@ -97,6 +101,9 @@ export function ProductCaptureSheet({ isOpen, onClose, onUse }: ProductCaptureSh
 
     let cancelled = false;
     detectorRef.current = makeDetector();
+    void import('@zxing/browser').then(({ BrowserMultiFormatReader }) => {
+      if (!cancelled) zxingRef.current = new BrowserMultiFormatReader();
+    });
     const start = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
@@ -116,12 +123,24 @@ export function ProductCaptureSheet({ isOpen, onClose, onUse }: ProductCaptureSh
   }, [isOpen, stopCamera, t]);
 
   useEffect(() => {
-    if (!cameraReady || result || !detectorRef.current) return undefined;
+    if (!cameraReady || result) return undefined;
     const timer = window.setInterval(async () => {
       if (!videoRef.current || busyRef.current || videoRef.current.readyState < 2) return;
       try {
         const codes = await detectorRef.current?.detect(videoRef.current);
         if (codes?.[0]?.rawValue) void handleBarcode(codes[0].rawValue);
+        if (codes?.[0]?.rawValue) return;
+      } catch { /* Fall through to ZXing. */ }
+      try {
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        const cropWidth = Math.round(video.videoWidth * 0.8);
+        const cropHeight = Math.round(video.videoHeight * 0.5);
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+        canvas.getContext('2d')?.drawImage(video, (video.videoWidth - cropWidth) / 2, (video.videoHeight - cropHeight) / 2, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        const decoded = zxingRef.current?.decodeFromCanvas(canvas);
+        if (decoded?.getText()) void handleBarcode(decoded.getText());
       } catch { /* Keep the camera preview running. */ }
     }, 550);
     return () => window.clearInterval(timer);
@@ -146,9 +165,19 @@ export function ProductCaptureSheet({ isOpen, onClose, onUse }: ProductCaptureSh
     try {
       const bitmap = await createImageBitmap(file);
       const codes = await detectorRef.current?.detect(bitmap);
-      bitmap.close();
       if (codes?.[0]?.rawValue) {
+        bitmap.close();
         await handleBarcode(codes[0].rawValue);
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      canvas.getContext('2d')?.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      const decoded = zxingRef.current?.decodeFromCanvas(canvas);
+      if (decoded?.getText()) {
+        await handleBarcode(decoded.getText());
         return;
       }
     } catch { /* A regular product photo is still useful. */ }
@@ -192,7 +221,7 @@ export function ProductCaptureSheet({ isOpen, onClose, onUse }: ProductCaptureSh
           </>
         )}
       </div>
-      {!detectorRef.current ? <Text className="mt-3 flex items-center justify-center gap-1.5 text-xs"><Barcode className="h-3.5 w-3.5" />{t('Automatic barcode scanning is not supported in this browser.')}</Text> : null}
+      <Text className="mt-3 flex items-center justify-center gap-1.5 text-xs"><Barcode className="h-3.5 w-3.5" />{t('EAN-13, EAN-8 and UPC')}</Text>
     </EntrySheet>
   );
 }
