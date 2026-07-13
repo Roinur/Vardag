@@ -35,7 +35,7 @@ import { byCreatedDesc, dateTimeISO, todayISO, uid } from '../lib/utils';
 import { nextRecurringDate } from '../lib/recurrence';
 import { showNewTaskNotification, updateTodayNotification } from '../lib/notifications';
 import { registerPushSubscription, sendTaskAssignmentPush } from '../lib/pushSubscriptions';
-import { haptic, signalRealtimeArrival } from '../lib/motion';
+import { haptic } from '../lib/motion';
 
 type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'status'> & Partial<Pick<Task, 'status'>>;
 type CreateEventInput = Omit<CalendarEvent, 'id' | 'createdAt'>;
@@ -355,24 +355,28 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
     return data as T;
   }, [household?.id, markCloudError, user?.id]);
 
-  const syncNow = useCallback(async () => {
+  const syncFromCloud = useCallback(async (reportStatus: boolean) => {
     const expectedScope = user?.id && household?.id ? `${user.id}_${household.id}` : 'anonymous';
     if (!household?.id || !user?.id || activeDataScope !== expectedScope) {
-      setCloudStatus('local');
+      if (reportStatus) setCloudStatus('local');
       return;
     }
-    setCloudStatus('syncing');
+    if (reportStatus) setCloudStatus('syncing');
     try {
       await flushSyncQueue();
       const remote = await pullCloudState(household.id);
       await mergeRemoteState(remote);
       await refresh();
-      setCloudStatus('synced');
-      setCloudError('');
+      if (reportStatus) {
+        setCloudStatus('synced');
+        setCloudError('');
+      }
     } catch (error) {
       markCloudError(error);
     }
   }, [activeDataScope, flushSyncQueue, household?.id, markCloudError, refresh, user?.id]);
+
+  const syncNow = useCallback(() => syncFromCloud(true), [syncFromCloud]);
 
   const expectedDataScope = user?.id && household?.id ? `${user.id}_${household.id}` : 'anonymous';
 
@@ -406,14 +410,39 @@ export function VardagDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase || !household?.id) return undefined;
     const client = supabase;
+    let syncTimer: number | undefined;
+    let syncInFlight = false;
+    let syncQueued = false;
+
+    const runRealtimeSync = async () => {
+      if (syncInFlight) {
+        syncQueued = true;
+        return;
+      }
+      syncInFlight = true;
+      do {
+        syncQueued = false;
+        await syncFromCloud(false);
+      } while (syncQueued);
+      syncInFlight = false;
+    };
+
+    const scheduleRealtimeSync = () => {
+      if (syncTimer !== undefined) window.clearTimeout(syncTimer);
+      syncTimer = window.setTimeout(() => void runRealtimeSync(), 140);
+    };
+
     const channel = client
       .channel(`vardag-${household.id}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'vardag_records', filter: `household_id=eq.${household.id}`
-      }, () => void syncNow().then(signalRealtimeArrival))
+      }, scheduleRealtimeSync)
       .subscribe();
-    return () => { void client.removeChannel(channel); };
-  }, [household?.id, syncNow]);
+    return () => {
+      if (syncTimer !== undefined) window.clearTimeout(syncTimer);
+      void client.removeChannel(channel);
+    };
+  }, [household?.id, syncFromCloud]);
 
   const submitEntry = useCallback(async (rawText: string, scope: SharingScope = 'personal'): Promise<ParsedEntry> => {
     const entry: Entry = { id: uid('entry'), rawText, createdAt: dateTimeISO(), entryDate: todayISO(), scope, ownerId: user?.id };

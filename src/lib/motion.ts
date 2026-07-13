@@ -12,13 +12,3 @@ export const haptic = (kind: HapticKind = 'light'): void => {
   };
   navigator.vibrate(pattern[kind]);
 };
-
-export const signalRealtimeArrival = (): void => {
-  if (prefersReducedMotion()) return;
-  const root = document.documentElement;
-  root.classList.remove('has-realtime-arrival');
-  requestAnimationFrame(() => {
-    root.classList.add('has-realtime-arrival');
-    window.setTimeout(() => root.classList.remove('has-realtime-arrival'), 420);
-  });
-};

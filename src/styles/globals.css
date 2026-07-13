@@ -355,15 +355,6 @@ button:active:not(:disabled) {
   animation: row-in 180ms ease-out both;
 }
 
-.has-realtime-arrival .motion-row {
-  animation: realtime-row-in 320ms cubic-bezier(0.2, 0.72, 0.25, 1) both;
-}
-
-@keyframes realtime-row-in {
-  from { opacity: 0.35; transform: translateY(0.35rem); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .nav-item svg {
   transition: transform 180ms ease, stroke-width 180ms ease;
 }
