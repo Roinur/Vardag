@@ -2,26 +2,36 @@
 
 Vardag is a self-hosted, mobile-first family organizer for tasks, events, shopping, meals, leftovers, and shared food votes. It is an installable PWA with Swedish and English interfaces, local-first storage, Google accounts, realtime family sync, database-enforced privacy, and background assignment notifications.
 
+> **Project status: Early beta**<br>
+> Vardag is usable and actively developed, but self-hosters should expect occasional schema and setup changes before a stable release.
+
 Each family deploys and owns its own instance. This repository does not connect to a shared Vardag service and does not include a hosted demo, production URL, Supabase project, or credentials.
 
 ## Screenshots
 
-### Dark mode
+<p align="center">
+  <img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today overview in dark mode" width="760">
+</p>
+<p align="center"><strong>Today</strong> brings the family's tasks, events, shopping, and quick capture into one calm overview.</p>
+
+### App pages · Dark mode
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today in dark mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag Tasks in dark mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-events-dark.png" alt="Vardag Events in dark mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-shopping-dark.png" alt="Vardag Shopping in dark mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag Food in dark mode" width="150"></td>
+    <td width="50%"><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag Tasks in dark mode" width="340"></td>
+    <td width="50%"><img src="docs/screenshots/vardag-events-dark.png" alt="Vardag Events in dark mode" width="340"></td>
   </tr>
   <tr>
-    <td align="center">Today</td>
     <td align="center">Tasks</td>
     <td align="center">Events</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/vardag-shopping-dark.png" alt="Vardag Shopping in dark mode" width="340"></td>
+    <td width="50%"><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag Food and family votes in dark mode" width="340"></td>
+  </tr>
+  <tr>
     <td align="center">Shopping</td>
-    <td align="center">Food</td>
+    <td align="center">Food and votes</td>
   </tr>
 </table>
 
@@ -29,18 +39,23 @@ Each family deploys and owns its own instance. This repository does not connect 
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today in light mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-tasks-light.png" alt="Vardag Tasks in light mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-events-light.png" alt="Vardag Events in light mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-shopping-light.png" alt="Vardag Shopping in light mode" width="150"></td>
-    <td><img src="docs/screenshots/vardag-food-light.png" alt="Vardag Food in light mode" width="150"></td>
+    <td width="50%"><img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today in light mode" width="340"></td>
+    <td width="50%"><img src="docs/screenshots/vardag-tasks-light.png" alt="Vardag Tasks in light mode" width="340"></td>
   </tr>
   <tr>
     <td align="center">Today</td>
     <td align="center">Tasks</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/vardag-events-light.png" alt="Vardag Events in light mode" width="340"></td>
+    <td width="50%"><img src="docs/screenshots/vardag-shopping-light.png" alt="Vardag Shopping in light mode" width="340"></td>
+  </tr>
+  <tr>
     <td align="center">Events</td>
     <td align="center">Shopping</td>
-    <td align="center">Food</td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="docs/screenshots/vardag-food-light.png" alt="Vardag Food and family votes in light mode" width="340"><br><strong>Food and votes</strong></td>
   </tr>
 </table>
 
@@ -73,13 +88,24 @@ Follow [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for the complete step-by-step tuto
 
 ## Quick Local Start
 
-```powershell
-git clone https://github.com/Roinur/Vardag.git
+<table>
+  <tr>
+    <th width="50%">PowerShell · Windows</th>
+    <th width="50%">Bash · Linux/macOS</th>
+  </tr>
+  <tr>
+    <td valign="top"><pre><code>git clone https://github.com/Roinur/Vardag.git
 cd Vardag
 npm install
 Copy-Item .env.example .env.local
-npm run dev
-```
+npm run dev</code></pre></td>
+    <td valign="top"><pre><code>git clone https://github.com/Roinur/Vardag.git
+cd Vardag
+npm install
+cp .env.example .env.local
+npm run dev</code></pre></td>
+  </tr>
+</table>
 
 Fill `.env.local` with credentials from your own Supabase project before testing account and family features.
 
