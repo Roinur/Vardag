@@ -10,24 +10,24 @@ Each family deploys and owns its own instance. This repository does not connect 
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today overview in dark mode" width="760">
+  <img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today overview in light mode" width="460">
 </p>
 <p align="center"><strong>Today</strong> brings the family's tasks, events, shopping, and quick capture into one calm overview.</p>
 
-### App pages · Dark mode
+<h3 align="center">Light mode</h3>
 
-<table>
+<table align="center" width="600">
   <tr>
-    <td width="50%"><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag Tasks in dark mode" width="340"></td>
-    <td width="50%"><img src="docs/screenshots/vardag-events-dark.png" alt="Vardag Events in dark mode" width="340"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-tasks-light.png" alt="Vardag Tasks in light mode" width="250"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-events-light.png" alt="Vardag Events in light mode" width="250"></td>
   </tr>
   <tr>
     <td align="center">Tasks</td>
     <td align="center">Events</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/vardag-shopping-dark.png" alt="Vardag Shopping in dark mode" width="340"></td>
-    <td width="50%"><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag Food and family votes in dark mode" width="340"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-shopping-light.png" alt="Vardag Shopping in light mode" width="250"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-food-light.png" alt="Vardag Food and family votes in light mode" width="250"></td>
   </tr>
   <tr>
     <td align="center">Shopping</td>
@@ -35,27 +35,27 @@ Each family deploys and owns its own instance. This repository does not connect 
   </tr>
 </table>
 
-### Light mode
+<h3 align="center">Dark mode</h3>
 
-<table>
+<table align="center" width="600">
   <tr>
-    <td width="50%"><img src="docs/screenshots/vardag-today-light.png" alt="Vardag Today in light mode" width="340"></td>
-    <td width="50%"><img src="docs/screenshots/vardag-tasks-light.png" alt="Vardag Tasks in light mode" width="340"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-today-dark.png" alt="Vardag Today in dark mode" width="250"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-tasks-dark.png" alt="Vardag Tasks in dark mode" width="250"></td>
   </tr>
   <tr>
     <td align="center">Today</td>
     <td align="center">Tasks</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/vardag-events-light.png" alt="Vardag Events in light mode" width="340"></td>
-    <td width="50%"><img src="docs/screenshots/vardag-shopping-light.png" alt="Vardag Shopping in light mode" width="340"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-events-dark.png" alt="Vardag Events in dark mode" width="250"></td>
+    <td align="center" width="300"><img src="docs/screenshots/vardag-shopping-dark.png" alt="Vardag Shopping in dark mode" width="250"></td>
   </tr>
   <tr>
     <td align="center">Events</td>
     <td align="center">Shopping</td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><img src="docs/screenshots/vardag-food-light.png" alt="Vardag Food and family votes in light mode" width="340"><br><strong>Food and votes</strong></td>
+    <td colspan="2" align="center"><img src="docs/screenshots/vardag-food-dark.png" alt="Vardag Food and family votes in dark mode" width="250"><br><strong>Food and votes</strong></td>
   </tr>
 </table>
 
