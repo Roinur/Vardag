@@ -28,6 +28,7 @@ const sv: Record<string, string> = {
   Event: 'Händelse', "What's happening?": 'Vad händer?', Date: 'Datum', Time: 'Tid', Location: 'Plats', Optional: 'Valfritt',
   'Groceries and essentials': 'Matvaror och vardagssaker', 'Quick add item...': 'Lägg till snabbt...',
   'Add item': 'Lägg till vara', 'Add with details': 'Lägg till med detaljer', 'Total items': 'Totalt', Bought: 'Köpt',
+  '{bought} of {total} items bought': '{bought} av {total} varor köpta',
   Categories: 'Kategorier', Groceries: 'Matvaror', Household: 'Hushåll', Other: 'Övrigt', Clear: 'Rensa',
   item: 'vara', items: 'varor', 'Nothing here yet.': 'Inget här än.', 'Your list is empty': 'Inköpslistan är tom',
   'Add essentials from the quick field or Today parser.': 'Lägg till via snabbfältet eller Hitta kort på Idag.',

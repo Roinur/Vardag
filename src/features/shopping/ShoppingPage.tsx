@@ -12,8 +12,7 @@ import { ScopePicker } from '../../components/ScopePicker';
 import { ShoppingItemRow } from '../../components/ShoppingItemRow';
 import { ProductCaptureSheet, type ProductCaptureResult } from '../../components/ProductCaptureSheet';
 import { ShoppingAttachment } from '../../components/ShoppingAttachment';
-import { StatCard } from '../../components/StatCard';
-import { StatsGrid } from '../../components/StatsGrid';
+import { ShoppingProgress } from '../../components/ShoppingProgress';
 import { Text } from '../../components/Typography';
 import type { SharingScope } from '../../types/models';
 import { shoppingCategories } from '../../lib/shopping';
@@ -52,6 +51,8 @@ export function ShoppingPage() {
     [scopedShoppingItems]
   );
   const boughtItems = scopedShoppingItems.filter((item) => item.isBought);
+  const boughtCount = boughtItems.length;
+  const totalCount = scopedShoppingItems.length;
 
   const categoryIcon = (categoryName: string) => {
     if (categoryName === 'Groceries') return <ShoppingCart className="h-6 w-6 text-app-green" />;
@@ -137,10 +138,11 @@ export function ShoppingPage() {
         </div>
       ) : null}
 
-      <StatsGrid>
-        <StatCard icon={ShoppingCart} value={scopedShoppingItems.filter((item) => !item.isBought).length} label={t('To buy')} tone="green" compact />
-        <StatCard icon={CheckCircle2} value={scopedShoppingItems.filter((item) => item.isBought).length} label={t('Bought')} tone="purple" compact />
-      </StatsGrid>
+      <ShoppingProgress
+        bought={boughtCount}
+        total={totalCount}
+        label={t('{bought} of {total} items bought', { bought: boughtCount, total: totalCount })}
+      />
 
       {grouped.filter(({ items }) => items.length > 0).map(({ category: groupCategory, items }, index) => (
         <GlassCard key={groupCategory} className="mb-4" variant={index === 0 ? 'flat' : 'quiet'}>

@@ -28,7 +28,30 @@ export function AppShell({ activePage, onNavigate, onOpenSettings, children }: A
     profileAvatar
   ].filter((value): value is string => typeof value === 'string' && value.length > 0))], [identityAvatar, profileAvatar, resolvedAvatarUrl, user?.user_metadata?.avatar_url, user?.user_metadata?.picture]);
   const [avatarIndex, setAvatarIndex] = useState(0);
-  useEffect(() => setAvatarIndex(0), [avatarCandidates.join('|')]);
+  const [avatarAttempt, setAvatarAttempt] = useState(0);
+  const avatarKey = avatarCandidates.join('|');
+  useEffect(() => {
+    setAvatarIndex(0);
+    setAvatarAttempt((current) => current + 1);
+  }, [avatarKey]);
+  useEffect(() => {
+    if (avatarCandidates.length === 0 || avatarIndex < avatarCandidates.length) return undefined;
+    const retry = () => {
+      setAvatarIndex(0);
+      setAvatarAttempt((current) => current + 1);
+    };
+    const timer = window.setTimeout(retry, 30_000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') retry();
+    };
+    window.addEventListener('online', retry);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('online', retry);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [avatarCandidates.length, avatarIndex]);
   const avatarUrl = avatarCandidates[avatarIndex];
   return (
     <div className="meta-app min-h-dvh w-full overflow-x-hidden text-app-fg">
@@ -37,7 +60,7 @@ export function AppShell({ activePage, onNavigate, onOpenSettings, children }: A
           <div className="absolute right-0 top-3 z-10">
             {avatarUrl ? (
               <button type="button" className="profile-trigger" aria-label={t('Settings')} title={t('Settings')} onClick={onOpenSettings}>
-                <img src={avatarUrl} alt="" referrerPolicy="no-referrer" onError={() => setAvatarIndex((current) => current + 1)} />
+                <img key={`${avatarUrl}-${avatarAttempt}`} src={avatarUrl} alt="" referrerPolicy="no-referrer" onError={() => setAvatarIndex((current) => current + 1)} />
               </button>
             ) : (
               <IconCircle icon={CircleUserRound} label={t('Settings')} tone="muted" onClick={onOpenSettings} />

@@ -1,5 +1,5 @@
 import type { Session, User } from '@supabase/supabase-js';
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export interface HouseholdInfo {
@@ -36,15 +36,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const canLoadAvatar = (url: string): Promise<boolean> => new Promise((resolve) => {
-  const image = new Image();
-  const timer = window.setTimeout(() => resolve(false), 4500);
-  image.referrerPolicy = 'no-referrer';
-  image.onload = () => { window.clearTimeout(timer); resolve(true); };
-  image.onerror = () => { window.clearTimeout(timer); resolve(false); };
-  image.src = url;
-});
-
 const parseHousehold = (value: unknown): HouseholdInfo | null => {
   const row = Array.isArray(value) ? value[0] : value;
   if (!row || typeof row !== 'object') return null;
@@ -64,40 +55,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const avatarResolutionRef = useRef(0);
+  const avatarOwnerRef = useRef<string | null>(null);
 
   const resolveGoogleAvatar = useCallback(async (nextSession: Session | null) => {
+    const resolutionId = ++avatarResolutionRef.current;
     if (!nextSession) {
+      avatarOwnerRef.current = null;
       setAvatarUrl('');
       return;
     }
     const user = nextSession.user;
+    if (avatarOwnerRef.current !== user.id) {
+      avatarOwnerRef.current = user.id;
+      setAvatarUrl('');
+    }
     const metadataAvatar = user.user_metadata?.avatar_url ?? user.user_metadata?.picture;
     const identityAvatar = user.identities
       ?.map((identity) => identity.identity_data?.avatar_url ?? identity.identity_data?.picture)
       .find(Boolean);
-    const candidates = [...new Set([metadataAvatar, identityAvatar].filter((value): value is string => typeof value === 'string' && value.length > 0))];
-    for (const candidate of candidates) {
-      if (!await canLoadAvatar(candidate)) continue;
-      setAvatarUrl(candidate);
-      void supabase?.from('profiles').update({ avatar_url: candidate }).eq('id', user.id);
+    const directAvatar = [metadataAvatar, identityAvatar]
+      .find((value): value is string => typeof value === 'string' && value.length > 0);
+    if (directAvatar) {
+      setAvatarUrl(directAvatar);
+      void supabase?.from('profiles').update({ avatar_url: directAvatar }).eq('id', user.id);
       return;
     }
-    if (!nextSession.provider_token) {
-      setAvatarUrl('');
-      return;
-    }
+
     try {
-      const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-        headers: { Authorization: `Bearer ${nextSession.provider_token}` }
-      });
-      if (!response.ok) return;
-      const profile = await response.json() as { picture?: string };
-      if (profile.picture && await canLoadAvatar(profile.picture)) {
-        setAvatarUrl(profile.picture);
-        void supabase?.from('profiles').update({ avatar_url: profile.picture }).eq('id', user.id);
+      if (nextSession.provider_token) {
+        const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+          headers: { Authorization: `Bearer ${nextSession.provider_token}` }
+        });
+        if (response.ok) {
+          const googleProfile = await response.json() as { picture?: string };
+          if (googleProfile.picture) {
+            if (avatarResolutionRef.current === resolutionId) setAvatarUrl(googleProfile.picture);
+            void supabase?.from('profiles').update({ avatar_url: googleProfile.picture }).eq('id', user.id);
+            return;
+          }
+        }
       }
+
+      const { data: profile } = await supabase!
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (avatarResolutionRef.current !== resolutionId) return;
+      setAvatarUrl(typeof profile?.avatar_url === 'string' ? profile.avatar_url : '');
     } catch {
-      // The generic profile icon remains available when Google userinfo is unreachable.
+      // Keep the last known image during temporary Google or Supabase failures.
     }
   }, []);
 
