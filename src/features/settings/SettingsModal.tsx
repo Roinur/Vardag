@@ -29,6 +29,8 @@ export function SettingsModal({ isOpen, onClose, theme, onThemeChange }: Setting
   const [familyCode, setFamilyCode] = useState('');
   const [showFamily, setShowFamily] = useState(false);
   const [familyMessage, setFamilyMessage] = useState('');
+  const [editingMemberId, setEditingMemberId] = useState<string>();
+  const [nicknameDraft, setNicknameDraft] = useState('');
   const currentMember = householdMembers.find((member) => member.id === user?.id);
   const canManageRoles = currentMember?.role === 'owner';
   useHistoryLayer(isOpen, 'settings', onClose);
@@ -49,6 +51,17 @@ export function SettingsModal({ isOpen, onClose, theme, onThemeChange }: Setting
     await clearData();
     setPendingClear(false);
     setMessage(t('All data cleared.'));
+  };
+
+  const saveNickname = async (memberId: string) => {
+    try {
+      await setMemberNickname(memberId, nicknameDraft);
+      setFamilyMessage(t('Nickname saved'));
+    } catch (saveError) {
+      setFamilyMessage(saveError instanceof Error ? saveError.message : t('Could not save nickname'));
+    } finally {
+      setEditingMemberId(undefined);
+    }
   };
 
   return (
@@ -223,13 +236,30 @@ export function SettingsModal({ isOpen, onClose, theme, onThemeChange }: Setting
                   <div key={member.id} className="family-center__member">
                     <div className="flex items-center gap-3">
                       {member.avatarUrl ? <img className="h-10 w-10 rounded-full object-cover" src={member.avatarUrl} alt="" referrerPolicy="no-referrer" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-app-purple/10"><Users className="h-4 w-4 text-app-purple" /></div>}
-                      <div className="min-w-0 flex-1"><Text className="truncate font-semibold text-app-fg">{member.displayName}</Text>{member.nickname ? <Text className="truncate text-xs">{member.legalName}</Text> : null}</div>
+                      <div className="family-center__name">
+                        {editingMemberId === member.id ? (
+                          <input
+                            className="family-center__name-input"
+                            value={nicknameDraft}
+                            aria-label={t('Nickname')}
+                            autoFocus
+                            onChange={(event) => setNicknameDraft(event.target.value)}
+                            onBlur={() => void saveNickname(member.id)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') event.currentTarget.blur();
+                              if (event.key === 'Escape') setEditingMemberId(undefined);
+                            }}
+                          />
+                        ) : <Text className="truncate font-semibold text-app-fg">{member.displayName}</Text>}
+                        {editingMemberId !== member.id ? (
+                          <button type="button" className="family-center__rename" aria-label={t('Rename {name}', { name: member.displayName })} onClick={() => { setNicknameDraft(member.nickname ?? member.legalName); setEditingMemberId(member.id); }}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        ) : null}
+                      </div>
                       <span className="family-center__role">{member.role === 'owner' ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}{t(member.role === 'owner' ? 'Owner' : member.role === 'adult' ? 'Adult' : 'Member')}</span>
                     </div>
-                    <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
-                      <label className="family-center__nickname"><Pencil className="h-3.5 w-3.5" /><input defaultValue={member.nickname ?? ''} placeholder={t('Your nickname for {name}', { name: member.legalName })} aria-label={t('Nickname')} onBlur={(event) => void setMemberNickname(member.id, event.target.value).then(() => setFamilyMessage(t('Nickname saved'))).catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not save nickname')))} /></label>
-                      {canManageRoles && member.role !== 'owner' ? <select className="family-center__role-select" value={member.role} aria-label={t('Role')} onChange={(event) => void setMemberRole(member.id, event.target.value as 'adult' | 'member').catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not change role')))}><option value="adult">{t('Adult')}</option><option value="member">{t('Member')}</option></select> : null}
-                    </div>
+                    {canManageRoles && member.role !== 'owner' ? <div className="mt-2 flex justify-end"><select className="family-center__role-select" value={member.role} aria-label={t('Role')} onChange={(event) => void setMemberRole(member.id, event.target.value as 'adult' | 'member').catch((error: unknown) => setFamilyMessage(error instanceof Error ? error.message : t('Could not change role')))}><option value="adult">{t('Adult')}</option><option value="member">{t('Member')}</option></select></div> : null}
                   </div>
                 ))}
               </div>

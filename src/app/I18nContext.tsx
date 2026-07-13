@@ -107,9 +107,9 @@ const sv: Record<string, string> = {
   Nickname: 'Smeknamn', Role: 'Roll', 'Nickname saved': 'Smeknamn sparat',
   'Could not save nickname': 'Kunde inte spara smeknamnet', 'Could not change role': 'Kunde inte ändra rollen',
   'Your nickname for {name}': 'Ditt smeknamn för {name}',
+  'Rename {name}': 'Byt namn på {name}',
   'Nicknames are private to you and work in Detect Cards.': 'Smeknamn visas bara för dig och fungerar i Hitta kort.',
-  Week: 'Vecka', 'Who does what': 'Vem gör vad', 'Assigned tasks this week': 'Tilldelade uppgifter den här veckan',
-  'Nothing assigned': 'Inget tilldelat', task: 'uppgift', tasks: 'uppgifter'
+  task: 'uppgift', tasks: 'uppgifter'
 };
 
 interface I18nContextValue {

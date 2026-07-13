@@ -1,4 +1,4 @@
-import { CheckSquare, Flag, Plus, UsersRound } from 'lucide-react';
+import { CheckSquare, Flag, Plus } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { useVardagData } from '../../app/VardagDataContext';
 import { useI18n } from '../../app/I18nContext';
@@ -14,17 +14,16 @@ import { ScopePicker } from '../../components/ScopePicker';
 import { StatCard } from '../../components/StatCard';
 import { StatsGrid } from '../../components/StatsGrid';
 import { TaskItem } from '../../components/TaskItem';
-import { Text } from '../../components/Typography';
 import type { Priority, RepeatRule, SharingScope } from '../../types/models';
 import { todayISO } from '../../lib/utils';
 import { useAuth } from '../../app/AuthContext';
 import { isRecordVisibleToUser } from '../../lib/recordVisibility';
 
-type TaskTab = 'today' | 'upcoming' | 'completed' | 'week';
+type TaskTab = 'today' | 'upcoming' | 'completed';
 
 export function TasksPage() {
   const { t } = useI18n();
-  const { user, householdMembers } = useAuth();
+  const { user } = useAuth();
   const { tasks, addTask, toggleTask, deleteTask } = useVardagData();
   const [tab, setTab] = useState<TaskTab>('today');
   const [isAdding, setIsAdding] = useState(false);
@@ -37,21 +36,13 @@ export function TasksPage() {
   const [assignees, setAssignees] = useState<Array<{ id: string; name: string }>>([]);
   const [scopeFilter, setScopeFilter] = useState<SharingScope>('family');
   const today = todayISO();
-  const now = new Date(`${today}T12:00:00`);
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  const weekStart = monday.toISOString().slice(0, 10);
-  const weekEnd = sunday.toISOString().slice(0, 10);
 
   const scopedTasks = useMemo(() => tasks.filter((task) => (task.scope ?? 'family') === scopeFilter && isRecordVisibleToUser(task, user?.id)), [scopeFilter, tasks, user?.id]);
   const filteredTasks = useMemo(() => {
-    if (tab === 'week') return scopedTasks.filter((task) => task.status === 'todo' && (!task.dueDate || (task.dueDate >= weekStart && task.dueDate <= weekEnd)));
     if (tab === 'completed') return scopedTasks.filter((task) => task.status === 'done');
     if (tab === 'upcoming') return scopedTasks.filter((task) => task.status === 'todo' && task.dueDate !== today);
     return scopedTasks.filter((task) => task.status === 'todo' && (!task.dueDate || task.dueDate === today));
-  }, [scopedTasks, tab, today, weekEnd, weekStart]);
+  }, [scopedTasks, tab, today]);
   const sectionTitle = tab === 'completed' ? t('Completed Tasks') : tab === 'upcoming' ? t('Upcoming Tasks') : t(filteredTasks.length === 1 ? "Today's Task" : "Today's Tasks");
   const filteredCountLabel = tab === 'completed' ? t('Completed') : tab === 'upcoming' ? t('upcoming') : t('Due today');
 
@@ -86,37 +77,18 @@ export function TasksPage() {
       <ScopePicker value={scopeFilter} onChange={setScopeFilter} className="mb-4" showLabel={false} />
       <SegmentedControl<TaskTab>
         value={tab}
-        options={['today', 'upcoming', 'completed', 'week']}
-        labels={{ today: t('today'), upcoming: t('upcoming'), completed: t('completed'), week: t('Week') }}
+        options={['today', 'upcoming', 'completed']}
+        labels={{ today: t('today'), upcoming: t('upcoming'), completed: t('completed') }}
         onChange={setTab}
         ariaLabel={t('Task view')}
       />
 
-      {tab !== 'week' ? <StatsGrid>
+      <StatsGrid>
         <StatCard icon={CheckSquare} value={filteredTasks.length} label={filteredCountLabel} tone="blue" compact />
         <StatCard icon={Flag} value={filteredTasks.filter((task) => task.priority === 'high').length} label={t('High priority')} tone="purple" compact />
-      </StatsGrid> : null}
+      </StatsGrid>
 
-      {tab === 'week' ? (
-        <section className="mb-5">
-          <SectionHeader title={t('Who does what')} icon={<UsersRound className="h-5 w-5 text-app-purple" />} />
-          <div className="family-week" aria-label={t('Assigned tasks this week')}>
-            {householdMembers.map((member) => {
-              const memberTasks = filteredTasks.filter((task) => task.assigneeId === member.id || task.assigneeIds?.includes(member.id));
-              return <div className="family-week__column" key={member.id}>
-                <div className="family-week__person">
-                  {member.avatarUrl ? <img src={member.avatarUrl} alt="" referrerPolicy="no-referrer" /> : <span>{member.displayName.slice(0, 1).toUpperCase()}</span>}
-                  <div className="min-w-0"><Text className="truncate font-semibold text-app-fg">{member.displayName}</Text><Text className="text-xs">{memberTasks.length} {t(memberTasks.length === 1 ? 'task' : 'tasks')}</Text></div>
-                </div>
-                <div className="family-week__tasks">
-                  {memberTasks.map((task) => <button type="button" className="family-week__task" key={task.id} onClick={() => void toggleTask(task)}><CheckSquare className="h-4 w-4 shrink-0 text-app-active" /><span><strong>{task.title}</strong><small>{task.dueDate ? new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric' }).format(new Date(`${task.dueDate}T12:00:00`)) : t('This week')}</small></span></button>)}
-                  {!memberTasks.length ? <Text className="family-week__empty">{t('Nothing assigned')}</Text> : null}
-                </div>
-              </div>;
-            })}
-          </div>
-        </section>
-      ) : <GlassCard className="mb-5">
+      <GlassCard className="mb-5">
         <SectionHeader
           title={sectionTitle}
           icon={<CheckSquare className="h-6 w-6 text-app-active" />}
@@ -129,7 +101,7 @@ export function TasksPage() {
         {filteredTasks.length === 0 ? (
           <EmptyState icon={CheckSquare} title={t('No tasks here')} body={t('Add one directly or use Detect Cards on Today.')} />
         ) : null}
-      </GlassCard>}
+      </GlassCard>
 
       <EntrySheet
         isOpen={isAdding}
