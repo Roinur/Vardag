@@ -71,6 +71,16 @@ body,
   min-height: 100%;
 }
 
+@media (max-width: 640px) {
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 body {
   margin: 0;
   min-width: 320px;
